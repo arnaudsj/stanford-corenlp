@@ -20,7 +20,8 @@
 
   (:use
     (loom graph attr)
-    clojure.set)
+    [clojure.string :only [join]]
+    [clojure.set :exclude [join]])
   (:gen-class :main true))
 
 ;;;;;;;;;;;;;;;;
@@ -67,17 +68,6 @@
   load-pos-tagger
   (memoize (fn [] (MaxentTagger. MaxentTagger/DEFAULT_JAR_PATH))))
 
-(defmulti pos-tag
-  "Tag a sequence of words with their parts of speech, returning a sequence of TaggedWord objects."
-  type)
-
-(defn pos-tag
-  "Tag a sequence of words with their parts of speech, returning a sequence of
-`TaggedWord` objects."
-  [coll]
-  (.tagSentence (load-pos-tagger)
-                (java.util.ArrayList. (map word coll))))
-
 (defn pos-tag-annotate
   "Annotate a `CoreLabel` sequence with part-of-speech tags."
   [coll]
@@ -101,11 +91,6 @@
      (empty? tag) (.stem morphology word)
      ;; TODO phrasal verb check
      :else (.lemma morphology (.word word) tag))))
-
-(defn lemmatize
-  "Lemmatize a sequence of `TaggedWord` objects with their parts of speech."
-  [sentence]
-  (map lemmatize-word sentence))
 
 (defn lemma-annotate
   "Annotate a sequence of `CoreLabel` objects with their lemma."
@@ -154,18 +139,6 @@
   annotated `CoreLabel` objects."
   [sentence]
   (.classifySentence (load-numeric-classifier) sentence))
-
-;; TODO: Resolve some asymmetry of API. Most convenience functions
-;; accept already-tokenized input; this one can't because it needs
-;; CoreLabels (not just any tokenized input)
-(defn named-entities
-  "Convenience function which returns a sequence of named entity tags
-  associated with each token in the string input."
-  [string]
-
-  (let [annotated (-> string tokenize-core-label pos-tag-annotate
-                      lemma-annotate named-entities-annotate)]
-    (map #(.ner %) annotated)))
 
 ;;;;;;;;;;
 ;; Parsing
@@ -256,3 +229,31 @@
 
 (defmethod dependency-parse :default [s]
   (dependency-parse (parse s)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; Convenience functions
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn pos-tag
+  "Return the parts of speech for the words in a string."
+  [string]
+
+  (map #(.tag %) (-> string tokenize-core-label pos-tag-annotate)))
+
+(defn lemmatize
+  "Return a sequence of lemmatized tokens drawn from the given string."
+  [string]
+
+  (let [annotated (-> string tokenize-core-label
+                      pos-tag-annotate lemma-annotate)]
+    (map #(.lemma %) annotated)))
+
+(defn named-entities
+  "Convenience function which returns a sequence of named entity tags
+  associated with each token in the string input."
+  [string]
+
+  (let [annotated (-> string tokenize-core-label pos-tag-annotate
+                      lemma-annotate named-entities-annotate)]
+    (map #(.ner %) annotated)))

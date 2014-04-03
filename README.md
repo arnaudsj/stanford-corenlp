@@ -5,6 +5,8 @@ wraps the tokenizer, parser and dependencies.
 
 ## Usage
 
+TODO: document functionality apart from convenience functions
+
 ### Tokenization
 
     (use 'corenlp)
@@ -14,11 +16,14 @@ wraps the tokenizer, parser and dependencies.
 ### Part-of-Speech Tagging
 
     (use 'corenlp)
-    (pos-tag (tokenize "Colorless green ideas sleep furiously."))
-    ;; => [#<TaggedWord Colorless/JJ> #<TaggedWord green/JJ> ...]
+    (pos-tag "Colorless green ideas sleep furiously.")
+    ;; => ("JJ" "JJ" "NNS" "VBP" "RB" ".")
 
-Returns a list of `TaggedWord` objects. Call `.tag()` on a `TaggedWord` instance
-to get its tag.
+### Lemmatization
+
+    (use 'corenlp)
+    (lemmatize "The men have four cars.")
+    ;; => ("the" "man" "have" "four" "car" ".")
 
 ### Named-Entity Recognition
 
@@ -61,5 +66,5 @@ Distributed under the Eclipse Public License, the same as Clojure.
 
 ## Contributors
 
-- Cory Giles 
+- Cory Giles
 - Hans Engel
