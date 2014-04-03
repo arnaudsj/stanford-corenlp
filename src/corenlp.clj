@@ -155,6 +155,18 @@
   [sentence]
   (.classifySentence (load-numeric-classifier) sentence))
 
+;; TODO: Resolve some asymmetry of API. Most convenience functions
+;; accept already-tokenized input; this one can't because it needs
+;; CoreLabels (not just any tokenized input)
+(defn named-entities
+  "Convenience function which returns a sequence of named entity tags
+  associated with each token in the string input."
+  [string]
+
+  (let [annotated (-> string tokenize-core-label pos-tag-annotate
+                      lemma-annotate named-entities-annotate)]
+    (map #(.ner %) annotated)))
+
 ;;;;;;;;;;
 ;; Parsing
 ;;;;;;;;;;

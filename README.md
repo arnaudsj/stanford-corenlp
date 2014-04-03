@@ -20,6 +20,12 @@ wraps the tokenizer, parser and dependencies.
 Returns a list of `TaggedWord` objects. Call `.tag()` on a `TaggedWord` instance
 to get its tag.
 
+### Named-Entity Recognition
+
+    (use 'corenlp)
+    (named-entities "Barack Obama is the president of the United States.")
+    ;; => ("PERSON" "PERSON" "O" "O" "O" "O" "O" "LOCATION" "LOCATION" "O")
+
 ### Parsing
 
 To parse a sentence:
