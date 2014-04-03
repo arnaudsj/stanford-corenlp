@@ -1,21 +1,28 @@
 (ns corenlp
   (:import
     (java.io StringReader)
-    (edu.stanford.nlp.process 
-      DocumentPreprocessor PTBTokenizer)
-    (edu.stanford.nlp.ling Word)
+    (java.util Properties)
+    (edu.stanford.nlp.process
+      DocumentPreprocessor Morphology PTBTokenizer)
+    (edu.stanford.nlp.ling
+      Word CoreAnnotations$LemmaAnnotation
+      CoreAnnotations$NamedEntityTagAnnotation
+      CoreAnnotations$PartOfSpeechAnnotation)
     (edu.stanford.nlp.tagger.maxent MaxentTagger)
     (edu.stanford.nlp.trees 
       LabeledScoredTreeNode PennTreebankLanguagePack  
       LabeledScoredTreeReaderFactory)
-    (edu.stanford.nlp.parser.lexparser 
-      LexicalizedParser))
-  
+    (edu.stanford.nlp.parser.lexparser
+      LexicalizedParser)
+    (edu.stanford.nlp.ie NERClassifierCombiner)
+    (edu.stanford.nlp.ie.regexp
+      NumberSequenceClassifier))
+
   (:use
     (loom graph attr)
     clojure.set)
   (:gen-class :main true))
- 
+
 ;;;;;;;;;;;;;;;;
 ;; Preprocessing
 ;;;;;;;;;;;;;;;;
@@ -24,7 +31,16 @@
   "Tokenize an input string into a sequence of Word objects."
   (.tokenize
     (PTBTokenizer/newPTBTokenizer
-      (StringReader. s)))) 
+     (StringReader. s))))
+
+(defn tokenize-core-label [s]
+  "Tokenize an input string into a sequence of `CoreLabel` objects."
+  (.tokenize
+    (PTBTokenizer/newPTBTokenizer
+     (StringReader. s)
+     false ; tokenize newlines
+     false ; invertible
+     )))
 
 (defn split-sentences [text]
   "Split a string into a sequence of sentences, each of which is a sequence of Word objects. (Thus, this method both splits sentences and tokenizes simultaneously.)"
@@ -33,8 +49,8 @@
       (iterator-seq
         (.iterator
           (DocumentPreprocessor. rdr))))))
- 
-(defmulti word 
+
+(defmulti word
   "Attempt to convert a given object into a Word, which is used by many downstream algorithms."
   type)
 
@@ -51,16 +67,93 @@
   load-pos-tagger
   (memoize (fn [] (MaxentTagger. MaxentTagger/DEFAULT_JAR_PATH))))
 
-(defmulti pos-tag 
+(defmulti pos-tag
   "Tag a sequence of words with their parts of speech, returning a sequence of TaggedWord objects."
   type)
 
-(defmethod pos-tag java.util.ArrayList [sentence]
-  (.tagSentence (load-pos-tagger) sentence))
-
-(defmethod pos-tag :default [coll]
-  (.tagSentence (load-pos-tagger) 
+(defn pos-tag
+  "Tag a sequence of words with their parts of speech, returning a sequence of
+`TaggedWord` objects."
+  [coll]
+  (.tagSentence (load-pos-tagger)
                 (java.util.ArrayList. (map word coll))))
+
+(defn pos-tag-annotate
+  "Annotate a `CoreLabel` sequence with part-of-speech tags."
+  [coll]
+
+  (doall (map #(.set %1 CoreAnnotations$PartOfSpeechAnnotation (.tag %2))
+            coll (.tagSentence (load-pos-tagger) coll)))
+  coll)
+
+;;;;;;;;;;;;;;;;
+;; Lemmatization
+;;;;;;;;;;;;;;;;
+
+(def ^{:private true}
+  morphology (Morphology.))
+
+(defn lemmatize-word
+  "Lemmatize a single word object."
+  [word]
+  (let [tag (.tag word)]
+    (cond
+     (empty? tag) (.stem morphology word)
+     ;; TODO phrasal verb check
+     :else (.lemma morphology (.word word) tag))))
+
+(defn lemmatize
+  "Lemmatize a sequence of `TaggedWord` objects with their parts of speech."
+  [sentence]
+  (map lemmatize-word sentence))
+
+(defn lemma-annotate
+  "Annotate a sequence of `CoreLabel` objects with their lemma."
+  [sentence]
+  (doall (map #(.set %1 CoreAnnotations$LemmaAnnotation
+                   (lemmatize-word %1))
+              sentence))
+  sentence)
+
+;;;;;;
+;; NER
+;;;;;;
+
+(def ^{:private true}
+  ner-load-paths
+  ["edu/stanford/nlp/models/ner/english.all.3class.distsim.crf.ser.gz"
+   "edu/stanford/nlp/models/ner/english.muc.7class.distsim.crf.ser.gz"
+   "edu/stanford/nlp/models/ner/english.conll.4class.distsim.crf.ser.gz"])
+
+(def ^{:private true}
+  load-ner-classifier
+  (memoize (fn [] (NERClassifierCombiner.
+                   true              ; applyNumericClassifiers
+                   true              ; useSUTime
+                   (into-array String ner-load-paths)))))
+
+(def ^{:private true}
+  load-numeric-classifier
+  (memoize (fn [] (NumberSequenceClassifier.
+                   true              ; useSUTime
+                   ))))
+
+(defn named-entities-annotate
+  "Annotate named entities in a sequence of words. Returns a sequence of
+  annotated `CoreLabel' objects."
+  [sentence]
+  (doall
+      (map-indexed
+       #(.setNER (.get sentence %1)
+                 (.get %2 CoreAnnotations$NamedEntityTagAnnotation))
+       (.classifySentence (load-ner-classifier) sentence)))
+  sentence)
+
+(defn numeric-entities-annotate
+  "Annotate numeric entities in a sequence of words. Returns a sequence of
+  annotated `CoreLabel` objects."
+  [sentence]
+  (.classifySentence (load-numeric-classifier) sentence))
 
 ;;;;;;;;;;
 ;; Parsing
