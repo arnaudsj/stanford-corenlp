@@ -28,7 +28,9 @@
   [^java.lang.String tree-str]
   (let [reader (PennTreeReader. (StringReader. tree-str)
                                 (LabeledScoredTreeFactory.))]
-    (.readTree reader)))
+    (try (.readTree reader)
+         (catch java.io.IOException e
+           nil))))
 
 (defn tregex-pattern
   "Returns an instance of `TregexPattern`, for use, e.g. in
@@ -43,7 +45,6 @@
 
 (defmethod tregex-matcher java.lang.String
   [^String pattern-str ^Tree tree]
-  (println tree)
   (.matcher (tregex-pattern pattern-str) tree))
 
 (defmethod tregex-matcher TregexPattern
