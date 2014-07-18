@@ -51,12 +51,28 @@
   [^TregexPattern tregex-pattern ^Tree tree]
   (.matcher tregex-pattern tree))
 
-(defn tregex-named-nodes
-  "Returns a map of the named nodes from the most recent match/find."
-  ;; TODO match rest of re-groups behavior
+(defn tregex-match
+  "Returns a map of the named nodes from the most recent match/find. If
+  there are no named nodes, returns the tree node that matches the root
+  node of the associated pattern. If there are named nodes, the root
+  match is included in the returned map under the key `:root`."
   [^TregexMatcher matcher]
-  (let [names (.getNodeNames matcher)]
-    (apply hash-map (mapcat #(vector % (.getNode matcher %)) names))))
+  (let [matched-root (.getMatch matcher)
+        names (.getNodeNames matcher)]
+    (if (empty? names)
+      matched-root
+      (let [named-nodes
+            (apply hash-map (mapcat #(vector % (.getNode matcher %)) names))]
+        (assoc named-nodes :root matched-root)))))
+
+(defn tregex-seq
+  "Returns a lazy sequence of successive matches of `pattern` in `tree`,
+  where each match is produced by `tregex-match`."
+  [pattern ^Tree tree]
+  (let [m (tregex-matcher pattern tree)]
+    ((fn step []
+       (when (.find m)
+         (cons (tregex-match m) (lazy-seq (step))))))))
 
 (defn tregex-find
   "Returns the next tregex match, if any, as a map of named nodes. The
@@ -64,6 +80,6 @@
   with the key `:root` in the returned map."
   ([^TregexMatcher matcher]
      (when (.find matcher)
-       (assoc (tregex-named-nodes matcher) :root (.getMatch matcher))))
+       (tregex-match matcher)))
   ([tregex-pattern ^Tree tree]
      (tregex-find (tregex-matcher tregex-pattern tree))))
