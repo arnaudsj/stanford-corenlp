@@ -13,7 +13,8 @@
 
 (defn load-treebank
   "Load a PTB-style treebank from the given path. Returns a CoreNLP
-  `Treebank` object."
+  `Treebank` object (an `AbstractCollection` which can be counted,
+  filtered, mapped over, etc.)."
 
   ([path]
      (load-treebank path TreebankLanguagePack/DEFAULT_ENCODING))
@@ -83,3 +84,21 @@
        (tregex-match matcher)))
   ([tregex-pattern ^Tree tree]
      (tregex-find (tregex-matcher tregex-pattern tree))))
+
+(defn treebank-tregex
+  "Run a tregex search over an entire treebank or arbitrary collection
+  of trees. Returns a lazy sequence of matches as produced by
+  `tregex-match`."
+
+  ;; TODO: Re-implement or provide alternate implementation using
+  ;; Treebank#apply; this should be more efficient, at least for
+  ;; DiskTreebank
+
+  [pattern treebank]
+  (let [;; If we were provided a string, compile it once now (rather
+        ;; than re-compiling for every tree!)
+        pattern (if (instance? TregexPattern pattern)
+                  pattern
+                  (tregex-pattern pattern))]
+
+    (mapcat #(tregex-seq pattern %) treebank)))

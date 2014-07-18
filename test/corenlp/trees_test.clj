@@ -32,3 +32,15 @@
         nodeB (.firstChild nodeA)
         nodeC (.firstChild nodeB)]
     (is (= [nodeA nodeB nodeC] (trees/tregex-seq "__" tree)))))
+
+(deftest treebank-tregex
+  (let [;; Not a genuine CoreNLP treebank, but that's partly the point
+        ;; -- we want our treebank functions to work on generic tree
+        ;; collections, too
+        treebank [(trees/tree-from-string "(A (B C))")
+                  (trees/tree-from-string "(D (E C))")]
+
+        firstC (.firstChild (.firstChild (first treebank)))
+        secondC (.firstChild (.firstChild (second treebank)))]
+    (is (= [firstC secondC]
+           (trees/treebank-tregex "C" treebank)))))
