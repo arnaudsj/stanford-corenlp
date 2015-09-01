@@ -1,11 +1,9 @@
 # corenlp
 
 Clojure wrapper for Stanford CoreNLP tools.  Currently very incomplete, only
-wraps the tokenizer, parser and dependencies.
+wraps the tokenizer, parser and dependencies. Welcoming pull requests!
 
 ## Usage
-
-TODO: document functionality apart from convenience functions
 
 ### Tokenization
 
@@ -60,7 +58,7 @@ This requires GraphViz to be installed.
 
 ## License
 
-Copyright (C) 2011-2014 Contributors (Clojure code only)
+Copyright (C) 2011-2015 Contributors (Clojure code only)
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
@@ -68,3 +66,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 
 - Cory Giles
 - Hans Engel
+- Sébastien Arnaud

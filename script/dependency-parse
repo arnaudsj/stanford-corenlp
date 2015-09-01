@@ -3,9 +3,9 @@
 lein exec <(cat <<EOF
 
 (use '[leiningen.exec :only (deps)])
-(deps '[[es.corygil/corenlp "3.3.1-SNAPSHOT"]
-        [edu.stanford.nlp/stanford-corenlp "3.3.1"]
-        [edu.stanford.nlp/stanford-corenlp "3.3.1"
+(deps '[[me.arnaudsj/corenlp "3.5.2"]
+        [edu.stanford.nlp/stanford-corenlp "3.5.2"]
+        [edu.stanford.nlp/stanford-corenlp "3.5.2"
          :classifier "models"]
         [org.clojure/data.json "0.2.4"]])
 
@@ -15,14 +15,14 @@ lein exec <(cat <<EOF
 
 (loop []
   (let [line (.readLine *in*)
-        parses 
+        parses
         (or (try
               (map dependency-parse
                    (split-sentences line)))
             [])]
     (println
       (json/write-str parses))
-    (recur))) 
+    (recur)))
 
 EOF) 2> /dev/null
 
