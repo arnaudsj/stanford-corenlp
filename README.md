@@ -3,6 +3,8 @@
 Clojure wrapper for Stanford CoreNLP tools.  Currently very incomplete, only
 wraps the tokenizer, parser and dependencies. Welcoming pull requests!
 
+[![Build Status](https://travis-ci.org/arnaudsj/stanford-corenlp.svg)](https://travis-ci.org/arnaudsj/stanford-corenlp)
+
 ## Usage
 
 ### Tokenization
