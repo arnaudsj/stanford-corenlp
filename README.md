@@ -46,7 +46,7 @@ string with:
 
 ### Stanford Dependencies
 
-	(dependency-graph "I like cheese.")
+	(dependency-graph (dependency-parse (tokenize "I like cheese.")))
 
 will parse the sentence and return the dependency graph as a
 [loom](https://github.com/jkk/loom) graph, which you can then traverse with
