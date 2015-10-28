@@ -194,14 +194,18 @@
 
 (defn dependency-graph [dp]
   "Produce a loom graph from a DependencyParse record."
-  (let [[words tags edges] (map #(% dp) [:words :tags :edges])
-        g (apply digraph (map (partial take 2) edges))]
+  (let [dependencies  (:edges dp)
+        g             (apply digraph (map (partial take 2) dependencies))
+        node-vec      (vec (remove neg? (nodes g)))
+        on-graph      (fn [dp-keyword] (map (vec (map-indexed vector (dp-keyword dp))) node-vec))
+        graph-words   (on-graph :words)
+        graph-tags    (on-graph :tags)]
     (reduce (fn [g [i t]] (add-attr g i :tag t))
             (reduce (fn [g [i w]] (add-attr g i :word w))
                     (reduce (fn [g [gov dep type]]
-                              (add-attr g gov dep :type type)) g edges)
-                    (map-indexed vector words))
-            (map-indexed vector tags))))
+                              (add-attr g gov dep :type type)) g dependencies)
+                    graph-words)
+            graph-tags)))
 
 (def dependency-parse nil)
 

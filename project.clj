@@ -3,7 +3,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [edu.stanford.nlp/stanford-corenlp "3.5.2"]
                  [edu.stanford.nlp/stanford-corenlp "3.5.2" :classifier "models"]
-                 [cc.artifice/loom "0.1.3"]]
+                 [aysylu/loom  "0.5.4"]]
   :plugins [[lein-exec "0.3.5"]]
   :url "https://github.com/arnaudsj/stanford-corenlp"
   :license {:name "Eclipse Public License"
