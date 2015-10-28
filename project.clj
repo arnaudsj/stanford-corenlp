@@ -4,8 +4,7 @@
                  [edu.stanford.nlp/stanford-corenlp "3.5.2"]
                  [edu.stanford.nlp/stanford-corenlp "3.5.2" :classifier "models"]
                  [aysylu/loom  "0.5.4"]]
-  :plugins [[lein-exec "0.3.5"]
-            [lein-gorilla  "0.3.4"]]
+  :plugins [[lein-exec "0.3.5"]]
   :url "https://github.com/arnaudsj/stanford-corenlp"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
